@@ -8,7 +8,7 @@ def get_variant_params(n):
         print(f"Варіант n={n} (Парний). Інтервал [-π, π]. Функція експоненціальна.")
         a, b = -np.pi, np.pi
         def exact_f(x):
-            return x * n * np.exp(-(x**2) / n)
+            return x ** n * np.exp(-(x**2) / n)
         is_even = True
     else:
         print(f"Варіант n={n} (Непарний). Інтервал [0, π]. Функція тригонометрична.")
@@ -58,14 +58,14 @@ def plot_all_results(x_vals, y_exact, y_approx, a_coeffs, b_coeffs, N, omega, n)
     axs[0, 0].legend()
     axs[0, 0].grid(True)
 
-    axs[0, 1].set_title("Окремі гармоніки (перші 5)")
+    axs[0, 1].set_title(f"Окремі гармоніки (k=0..{N})")
     axs[0, 1].plot(x_vals, np.full_like(x_vals, a_coeffs[0] / 2), label="a_0 / 2 (Постійна)", color='black', linestyle=':')
-    for k in range(1, min(N + 1, 6)):
+    for k in range(1, N + 1):
         harmonic = a_coeffs[k] * np.cos(k * omega * x_vals) + b_coeffs[k] * np.sin(k * omega * x_vals)
         axs[0, 1].plot(x_vals, harmonic, label=f"Гармоніка k={k}")
     axs[0, 1].set_xlabel("x")
     axs[0, 1].set_ylabel("Амплітуда")
-    axs[0, 1].legend()
+    axs[0, 1].legend(fontsize=7, ncol=2)
     axs[0, 1].grid(True)
 
     k_vals = np.arange(0, N + 1)
@@ -102,10 +102,11 @@ def main():
     b_coeffs = [0.0] * (N + 1)
 
     if is_even:
+      
         def integrand_a0(x):
             return exact_f(x)
         integral_a0, _ = spi.quad(integrand_a0, a_limit, b_limit, limit=1000)
-        a_coeffs[0] = np.round((2 / T) * integral_a0, 6)
+        a_coeffs[0] = (2 / T) * integral_a0
 
         for k in range(1, N + 1):
             def integrand_ak(x):
@@ -113,10 +114,23 @@ def main():
             integral_ak, _ = spi.quad(integrand_ak, a_limit, b_limit, limit=1000)
             a_coeffs[k] = (2 / T) * integral_ak
     else:
+       
+        def integrand_a0(x):
+            return exact_f(x)
+        integral_a0, _ = spi.quad(integrand_a0, a_limit, b_limit, limit=1000)
+        a_coeffs[0] = (2 / T) * integral_a0
+
         for k in range(1, N + 1):
+           
+            def integrand_ak(x):
+                return exact_f(x) * np.cos(k * omega * x)
             def integrand_bk(x):
                 return exact_f(x) * np.sin(k * omega * x)
+
+            integral_ak, _ = spi.quad(integrand_ak, a_limit, b_limit, limit=1000)
             integral_bk, _ = spi.quad(integrand_bk, a_limit, b_limit, limit=1000)
+
+            a_coeffs[k] = (2 / T) * integral_ak
             b_coeffs[k] = (2 / T) * integral_bk
 
     x_vals = np.linspace(a_limit, b_limit, 1000)
